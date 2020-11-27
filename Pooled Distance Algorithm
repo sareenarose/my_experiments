@@ -1,6 +1,6 @@
 
 
-INPUTS: Homogeneous clusters from Phase I viz., gr1, gr2 etc.
+INPUTS: Homogeneous clusters from Phase I viz., gr1, gr2 etc. and this phase iterates for each group
 
 
 STEP 1: Computation of distance metrics RD & MD
