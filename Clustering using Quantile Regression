@@ -1,0 +1,48 @@
+Step I: Selection of optimized hyper-parameters
+
+rng('default');
+leafs=[5:5:length(train)*.1];
+l=length(leafs);
+err=zeros(l,1);
+for i=1:l
+    tri=TreeBagger(200,train(:,[3  5 6 7  11]),train(:,10),'Method','regression',...
+    'OOBPrediction','on', 'MinLeafSize',leafs(1,i),'PredictorSelection',"curvature");
+    e=oobError(tri,'Mode', 'ensemble');
+    err(i,1)=sum(e);
+end
+[m,id]=min(err);
+rng('default');
+trees=[50:50:length(train)*.1];
+l=length(trees);
+err=zeros(l,1);
+for i=1:l
+    tri=TreeBagger(trees(1,i),train(:,[3  5 6 7  11]),train(:,10),'Method','regression',...
+    'OOBPrediction','on', 'MinLeafSize',5,'PredictorSelection',"curvature");
+    e=oobError(tri,'Mode', 'ensemble');
+    err(i,1)=sum(e);
+end
+[m,id1]=min(err);
+
+
+%Step II: Tain the model and predict quantiles
+
+Mdl_train=TreeBagger(trees(id1),train(:,[3  5 6 7  11]),train(:,10),'Method','regression',...
+    'OOBPrediction','on', 'MinLeafSize',leafs(id),'PredictorSelection',"curvature");
+
+tau=[.1:.1:.9];
+F_q1_C = quantilePredict(Mdl_train,train(:,[3  5 6 7  11]),'Quantile',tau);
+    
+    
+%Step III: Evaluate the number of clusters and form the reuired number 
+
+eva=evalclusters(F_q1_C,'kmeans',"silhouette",'KList', [1:round(size(train,1)/500)]);
+idx=kmeans(F_q1_C,eva.OptimalK);
+
+% Depending on the number of Optimal number of clusters, as many groups are formed
+gr1=train(idx==1,:);
+gr2=train(idx==2,:);
+gr3=train(idx==3,:);
+gr4=train(idx==4,:);
+
+
+
