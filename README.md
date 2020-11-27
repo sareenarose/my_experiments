@@ -6,4 +6,6 @@ learning and statistical approaches
 Authors: Sareena Rose, Dr. S.Nickolas, Dr. S. M. Sunoj & Dr. S. Sangeetha
 
 
-Name of the program: Clustering using quantile regression and bifurcation of leverage points
+Name of the program: Clustering using quantile regression and POOLED DISTANCES ALGORITHM (PDA)
+
+PDA uses DetectMultVarOutliers (https://www.github.com/AntonSemechko/Multivariate-Outliers) with some modifications
