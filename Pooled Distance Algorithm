@@ -1,17 +1,17 @@
 
 
-INPUTS: Homogeneous clusters from Phase I viz., gr1, gr2 etc. and this phase iterates for each group
+%INPUTS: Homogeneous clusters from Phase I viz., gr1, gr2 etc. and this phase iterates for each group
 
 
-STEP 1: Computation of distance metrics RD & MD
+%STEP 1: Computation of distance metrics RD & MD
 
 gr1_in_C1=[];
 gr1_in_C2=[];
 gr1_in_out=[];
 X=gr1;
-m1=mahal(X(:,1:end-2),X(:,1:end-2));
+m1=mahal(X(:,1:end-1),X(:,1:end-1)); % Omit the response variable while calculating MD
 p_val=1-chi2cdf(m1,4);
-[~,~,RD,chi_crt]=DetectMultVarOutliers(X(:,1:end-2));
+[~,~,RD,chi_crt]=DetectMultVarOutliers(X(:,1:end-1)); % Omit the response variable while calculating RD
  c1=p_val>.05;
  c2=RD<chi_crt(1,3);   
 in=c1&c2;
@@ -19,30 +19,32 @@ gr1_in_C1=[gr1_in_C1;X(in,:)];
 gr1_in_out=X(c1&~c2|~c1&c2,:);
 gr1_in_C2=X(~c1&~c2,:);
 
-STEP 2: Processing of ambiguous observations
-
-[~,~,RD,~]=DetectMultVarOutliers(gr1_in_C1(:,1:end-2));
-[~,I1]=sort(RD);
-m1=mahal(gr1_in_C1(:,1:end-2),gr1_in_C1(:,1:end-2));
-[~,I2]=sort(m1);
-s1=ceil(size(gr1_in_C1,1)*.75);
-start=size(gr1_in_C1,1)-s1;
-id=I1(start:end)&I2(start:end);
-s=[true(size(gr1_in_C1(id,1))); false(size(gr1_in_out,1),1)];
-X=gr1_in_C1(id,:);
-start=size(X,1)+1
-stop=size(gr1_in_out,1)+start-1
-X=[X;gr1_in_out];
-m1=mahal(X(:,1:end-2),X(:,1:end-2));
-p_val=1-chi2cdf(m1,4);
-[~,~,RD,chi_crt]=DetectMultVarOutliers(X(:,1:end-2),floor((size(X,1)+5+1)/2),s,false);
-c1=p_val(start:stop)>.05;
- c2=RD(start:stop)<chi_crt(1,3); 
-in=c1&c2;
-gr1_in_C1=[gr1_in_C1;gr1_in_out(in,:)];
-gr1_in_out(in,:)=[];
-
-STEP 3: Dividing the observations into RO, VO, GLP and BLP
+%STEP 2: Processing of ambiguous observations
+cur_size=1;
+while cur_size< size(gr1_in_C1,1)
+     [~,~,RD,~]=DetectMultVarOutliers(gr1_in_C1(:,1:end-1));
+     [~,I1]=sort(RD);
+     m1=mahal(gr1_in_C1(:,1:end-2),gr1_in_C1(:,1:end-1));
+     [~,I2]=sort(m1);
+     s1=ceil(size(gr1_in_C1,1)*.75);
+     start=size(gr1_in_C1,1)-s1;
+     id=I1(start:end)&I2(start:end);
+     s=[true(size(gr1_in_C1(id,1))); false(size(gr1_in_out,1),1)];
+     X=gr1_in_C1(id,:);
+     start=size(X,1)+1
+     stop=size(gr1_in_out,1)+start-1
+     X=[X;gr1_in_out];
+     m1=mahal(X(:,1:end-1),X(:,1:end-1));
+     p_val=1-chi2cdf(m1,4);
+     [~,~,RD,chi_crt]=DetectMultVarOutliers(X(:,1:end-1),floor((size(X,1)+5+1)/2),s,false);
+     c1=p_val(start:stop)>.05;
+      c2=RD(start:stop)<chi_crt(1,3); 
+     in=c1&c2;
+     cur_size=size(gr1_in_C1,1);
+     gr1_in_C1=[gr1_in_C1;gr1_in_out(in,:)];
+     gr1_in_out(in,:)=[];
+ end                              % Repeat the loop till no more observations are added to inliers
+%STEP 3: Dividing the observations into RO, VO, GLP and BLP
 
 rng('default');
 leafs=[5:5:length(gr1)*.1];
@@ -70,7 +72,7 @@ end
 trees(id1)
 Mdl_gr1_in=TreeBagger(trees(id1),gr1(:,1:end-2),gr1(:,end-1),'Method','regression',...
    'OOBPrediction','on', 'MinLeafSize',leafs(id),'PredictorSelection',"curvature");
-   yfit=[gr1_in_C1(:,end-1) predict(Mdl_gr1_in,gr1_in_C1(:,1:end-2)) ];
+   yfit=[gr1_in_C1(:,end) predict(Mdl_gr1_in,gr1_in_C1(:,1:end-1)) ];
 yfit(:,3)=abs(yfit(:,1)-yfit(:,2));
 id=yfit(:,3)<=t_cookd;
 gr1_RO=gr1_in_C1(id,:);
