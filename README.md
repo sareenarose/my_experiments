@@ -14,6 +14,5 @@ The code is developed in Matlab 2018b and uses Statistical & Machine Learning To
 
 The above two programs is used to train the dataset and creates a framework for Regular Observations, Vertical Outliers, Good and Bad Leverage points.
 
-Then the test data set is classified using the above framework
+Then the test data set is classified using the above framework using any simple distance metric
 
-The code file for testing is test_framework
